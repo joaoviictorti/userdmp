@@ -7,7 +7,7 @@ license = "MIT"
 repository = "https://github.com/joaoviictorti/userdmp"
 homepage = "https://github.com/joaoviictorti/userdmp"
 readme = "README.md"
-keywords = ["user mode", "minidump", "windows", "rust"]
+keywords = ["user","minidump", "windows", "rust"]
 categories = ["os", "filesystem"]
 exclude = [
     ".gitignore",
