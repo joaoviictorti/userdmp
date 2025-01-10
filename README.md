@@ -21,11 +21,11 @@
 
 The **userdmp** format provides support for capturing detailed system state information during a crash or error. Its features include:
 
-- **Module List Stream (`ModuleListStream`)**: Contains information about all loaded modules (e.g., DLLs), including their file paths, base addresses, and sizes.  
-- **Handle Data Stream (`HandleDataStream`)**: Captures details about open handles in the process, such as references to files, threads, and synchronization objects.  
-- **System Info Stream (`SystemInfoStream`)**: Includes metadata about the operating system (e.g., version, build number) and hardware (e.g., CPU type and number of processors).  
-- **Exception Stream (`ExceptionStream`)**: Records details about the exception that triggered the dump, including the exception code, address, and relevant parameters.  
-- **Memory Stream (`MemoryListStream / MemoryInfoListStream`)**: Provides a list of memory regions that were included in the dump, allowing analysis of process memory contents at the time of the crash.
+- ✅ **Module List Stream (`ModuleListStream`)**: Contains information about all loaded modules (e.g., DLLs), including their file paths, base addresses, and sizes.  
+- ✅ **Handle Data Stream (`HandleDataStream`)**: Captures details about open handles in the process, such as references to files, threads, and synchronization objects.  
+- ✅ **System Info Stream (`SystemInfoStream`)**: Includes metadata about the operating system (e.g., version, build number) and hardware (e.g., CPU type and number of processors).  
+- ✅ **Exception Stream (`ExceptionStream`)**: Records details about the exception that triggered the dump, including the exception code, address, and relevant parameters.  
+- ✅ **Memory Stream (`MemoryListStream / MemoryInfoListStream`)**: Provides a list of memory regions that were included in the dump, allowing analysis of process memory contents at the time of the crash.
 
 ## Installation
 
