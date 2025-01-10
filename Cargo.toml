@@ -1,0 +1,29 @@
+[package]
+name = "userdmp"
+version = "0.1.0"
+edition = "2021"
+description = "A library in Rust for parsing Minidump (.dmp) files generated in user mode on Windows"
+license = "MIT"
+repository = "https://github.com/joaoviictorti/userdmp"
+homepage = "https://github.com/joaoviictorti/userdmp"
+readme = "README.md"
+keywords = ["user mode", "minidump", "windows", "rust"]
+categories = ["os", "filesystem"]
+exclude = [
+    ".gitignore",
+    "target/",
+    "tests/",
+    "/.vscode",
+    "/examples"
+]
+
+[dependencies]
+binrw = "0.14.1"
+bytemuck = "1.21.0"
+thiserror = "2.0.9"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59.0", features = ["Win32_Security", "Win32_System_Memory"] }
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.169"
