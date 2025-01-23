@@ -48,14 +48,11 @@ The userdmp library provides tools to parse and analyze Minidump (.dmp) files ge
 
 To start working with a Minidump file, use the `UserDump::new` function to parse the file and create a `UserDump` instance:
 ```rust, ignore
-use std::path::Path;
 use userdmp::{UserDump, UserDmpError};
 
 fn main() -> Result<(), UserDmpError> {
-    let path = Path::new("example.dmp");
-
     // Parse the Minidump file
-    let dump = UserDump::new(path)?;
+    let dump = UserDump::new("example.dmp")?;
     println!("Minidump parsed successfully!");
 
     Ok(())

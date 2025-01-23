@@ -98,10 +98,10 @@ impl<'a> UserDump<'a> {
     ///     Err(e) => eprintln!("Failed to parse minidump: {:?}", e),
     /// }
     /// ```
-    pub fn new(path: &Path) -> Result<Self, UserDmpError> {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self, UserDmpError> {
         // Mapping the file in memory to the target environment (Windows or Linux).
         let mapped_file = MappingFile::new(path)?;
-        Self::parser(mapped_file)
+        Self::parse(mapped_file)
     }
 
     /// Returns a reference to the list of threads in the parsed minidump.
@@ -211,7 +211,7 @@ impl<'a> UserDump<'a> {
     /// 
     /// * `Ok(Self)` - If the file is parsed successfully.
     /// * `Err(UserDmpError)` - If the file format is invalid or if parsing fails.
-    fn parser(mapped_file: MappingFile<'a>) -> Result<Self, UserDmpError> {
+    fn parse(mapped_file: MappingFile<'a>) -> Result<Self, UserDmpError> {
         // Creates a cursor to navigate the mapped file.
         let mut cursor = mapped_file.cursor();
 

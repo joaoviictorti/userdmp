@@ -45,7 +45,7 @@ impl<'a> MappingFile<'a> {
     ///     Ok(())
     /// }
     /// ```
-    pub fn new(path: &Path) -> Result<Self, UserDmpError> {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self, UserDmpError> {
         let file = File::open(path)?;
         let (buffer, address) = mapper::map_file(file)?;
         Ok(Self { buffer, address })

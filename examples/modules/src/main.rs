@@ -1,9 +1,7 @@
-use std::path::Path;
 use userdmp::{error::UserDmpError, UserDump};
 
 fn main() -> Result<(), UserDmpError> {
-    let path = Path::new("C:\\Examples.dmp");
-    let dmp = UserDump::new(path)?;
+    let dmp = UserDump::new("C:\\Examples.dmp")?;
 
     for (_, module) in dmp.modules().iter() {
         println!("[*] Path: {:?}", module.path);
