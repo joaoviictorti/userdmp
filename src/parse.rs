@@ -89,11 +89,9 @@ impl<'a> UserDump<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// use std::path::Path;
     /// use userdmp::{UserDump, UserDmpError};
     ///
-    /// let path = Path::new("example.dmp");
-    /// match UserDump::new(path) {
+    /// match UserDump::new("example.dmp") {
     ///     Ok(dump) => println!("Successfully parsed minidump."),
     ///     Err(e) => eprintln!("Failed to parse minidump: {:?}", e),
     /// }
@@ -109,7 +107,9 @@ impl<'a> UserDump<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// let dump = UserDump::new(Path::new("example.dmp")).unwrap();
+    /// use userdmp::UserDump;
+    /// 
+    /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (thread_id, thread) in dump.threads() {
     ///     println!("Thread ID: {}, Priority: {}", thread_id, thread.priority);
     /// }
@@ -123,7 +123,9 @@ impl<'a> UserDump<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// let dump = UserDump::new(Path::new("example.dmp")).unwrap();
+    /// use userdmp::UserDump;
+    /// 
+    /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (base_address, module) in dump.modules() {
     ///     println!(
     ///         "Module: {}, Base Address: 0x{:x}, Size: {} bytes",
@@ -142,7 +144,9 @@ impl<'a> UserDump<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// let dump = UserDump::new(Path::new("example.dmp")).unwrap();
+    /// use userdmp::UserDump;
+    /// 
+    /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (base_address, memory) in dump.memorys() {
     ///     println!(
     ///         "Memory Region: Base Address: 0x{:x}, Size: {} bytes",
@@ -160,10 +164,9 @@ impl<'a> UserDump<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// use std::path::Path;
     /// use userdmp::UserDump;
     ///
-    /// let dump = UserDump::new(Path::new("example.dmp")).unwrap();
+    /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (handle_id, handle) in dump.handles() {
     ///     println!(
     ///         "Handle ID: 0x{}, Type: {:?}, Object Name: {:?}, Attributes: {}, Access: {}",

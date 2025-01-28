@@ -32,14 +32,11 @@ impl<'a> MappingFile<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// use std::path::Path;
     /// use userdmp::{MappingFile, UserDmpError};
     ///
     /// fn main() -> Result<(), UserDmpError> {
-    ///     let path = Path::new("example.dmp");
-    ///
     ///     // Create a memory-mapped file.
-    ///     let mapped_file = MappingFile::new(path)?;
+    ///     let mapped_file = MappingFile::new("example.dmp")?;
     ///     println!("Memory-mapped file created. Size: {}", mapped_file.buffer.len());
     ///
     ///     Ok(())
@@ -61,14 +58,11 @@ impl<'a> MappingFile<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// use std::path::Path;
     /// use userdmp::{MappingFile, UserDmpError};
     ///
     /// fn main() -> Result<(), UserDmpError> {
-    ///     let path = Path::new("example.dmp");
-    ///
     ///     // Create a memory-mapped file and a cursor for it.
-    ///     let mapped_file = MappingFile::new(path)?;
+    ///     let mapped_file = MappingFile::new("example.dmp")?;
     ///     let mut cursor = mapped_file.cursor();
     ///
     ///     // Read the first 4 bytes of the mapped file as a u32.
