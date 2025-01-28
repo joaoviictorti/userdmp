@@ -19,8 +19,6 @@
 
 ## Features
 
-The **userdmp** format provides support for capturing detailed system state information during a crash or error. Its features include:
-
 - ✅ **Module List Stream (`ModuleListStream`)**: Contains information about all loaded modules (e.g., DLLs), including their file paths, base addresses, and sizes.  
 - ✅ **Handle Data Stream (`HandleDataStream`)**: Captures details about open handles in the process, such as references to files, threads, and synchronization objects.  
 - ✅ **System Info Stream (`SystemInfoStream`)**: Includes metadata about the operating system (e.g., version, build number) and hardware (e.g., CPU type and number of processors).  
