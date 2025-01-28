@@ -1,7 +1,8 @@
 # userdmp 🦀
 
 ![Rust](https://img.shields.io/badge/made%20with-Rust-red)
-![Platform](https://img.shields.io/badge/platform-windows-blueviolet)
+![crate](https://img.shields.io/crates/v/userdmp.svg)
+![docs](https://docs.rs/userdmp/badge.svg)
 ![Forks](https://img.shields.io/github/forks/joaoviictorti/userdmp)
 ![Stars](https://img.shields.io/github/stars/joaoviictorti/userdmp)
 ![License](https://img.shields.io/github/license/joaoviictorti/userdmp)
