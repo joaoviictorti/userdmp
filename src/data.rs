@@ -682,12 +682,12 @@ pub struct CONTEXT_X64 {
 #[repr(C)]
 pub struct CONTEXT_X86 {
     pub ContextFlags: u32,
-    pub Dr0: u64,
-    pub Dr1: u64,
-    pub Dr2: u64,
-    pub Dr3: u64,
-    pub Dr6: u64,
-    pub Dr7: u64,
+    pub Dr0: u32,
+    pub Dr1: u32,
+    pub Dr2: u32,
+    pub Dr3: u32,
+    pub Dr6: u32,
+    pub Dr7: u32,
     pub ControlWord: u32,
     pub StatusWord: u32,
     pub TagWord: u32,
