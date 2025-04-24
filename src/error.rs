@@ -86,5 +86,5 @@ pub enum UserDmpError {
     ///
     /// * `{0}` - The size of the context that was invalid.
     #[error("Invalid context")]
-    InvalidContext(),
+    InvalidContext,
 }

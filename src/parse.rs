@@ -21,6 +21,9 @@ pub type Handles = BTreeMap<u64, Handle>;
 /// Represents memory regions in a minidump file, mapped by their base addresses.
 pub type Memorys<'a> = BTreeMap<u64, Memory<'a>>;
 
+// Type of error
+pub type Result<T> = std::result::Result<T, UserDmpError>;
+
 /// Represents the processor architecture of the captured process.
 #[derive(Copy, Debug, Clone, Default)]
 pub enum Arch {
@@ -47,7 +50,7 @@ pub trait MinidumpStream<'a> {
     ///
     /// * `Ok(Self::Output)` - The parsed output of the stream.
     /// * `Err(UserDmpError)` - An error indicating the failure of the parsing process.
-    fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Self::Output, UserDmpError>;
+    fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Self::Output>;
 }
 
 /// Represents a parsed minidump file, containing metadata, modules, and threads.
@@ -56,6 +59,7 @@ pub struct UserDump<'a> {
     /// Indicates that it is the ID of the thread directly related to the exception.
     pub exception_thread_id: Option<u32>,
 
+    // System information on the dump
     pub system: System,
     
     /// The list of modules in the captured process.
@@ -89,14 +93,14 @@ impl<'a> UserDump<'a> {
     /// # Example
     ///
     /// ```rust,ignore
-    /// use userdmp::{UserDump, UserDmpError};
+    /// use userdmp::{UserDump};
     ///
     /// match UserDump::new("example.dmp") {
     ///     Ok(dump) => println!("Successfully parsed minidump."),
     ///     Err(e) => eprintln!("Failed to parse minidump: {:?}", e),
     /// }
     /// ```
-    pub fn new(path: impl AsRef<Path>) -> Result<Self, UserDmpError> {
+    pub fn new(path: impl AsRef<Path>) -> Result<Self> {
         // Mapping the file in memory to the target environment (Windows or Linux).
         let mapped_file = MappingFile::new(path)?;
         Self::parse(mapped_file)
@@ -197,7 +201,7 @@ impl<'a> UserDump<'a> {
     /// 
     /// * `Ok(S::Output)` - The parsed result for the specific stream type.
     /// * `Err(UserDmpError)` - An error indicating that the parsing failed.
-    fn parse_stream<S>(cursor: &mut Cursor<&'a [u8]>) -> Result<S::Output, UserDmpError>
+    fn parse_stream<S>(cursor: &mut Cursor<&'a [u8]>) -> Result<S::Output>
     where
         S: MinidumpStream<'a>,
     {
@@ -214,7 +218,7 @@ impl<'a> UserDump<'a> {
     /// 
     /// * `Ok(Self)` - If the file is parsed successfully.
     /// * `Err(UserDmpError)` - If the file format is invalid or if parsing fails.
-    fn parse(mapped_file: MappingFile<'a>) -> Result<Self, UserDmpError> {
+    fn parse(mapped_file: MappingFile<'a>) -> Result<Self> {
         // Creates a cursor to navigate the mapped file.
         let mut cursor = mapped_file.cursor();
 
@@ -308,7 +312,7 @@ impl<'a> UserDump<'a> {
     /// 
     /// * `Ok(u32)` - The thread ID associated with the exception.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parser_exception(cursor: &mut Cursor<&'a [u8]>) -> Result<u32, UserDmpError> {
+    fn parser_exception(cursor: &mut Cursor<&'a [u8]>) -> Result<u32> {
         // Reads the exception stream.
         let exception = MINIDUMP_EXCEPTION_STREAM::read(cursor)?;
 
@@ -394,7 +398,7 @@ impl<'a> MinidumpStream<'a> for System {
     /// 
     /// * `Ok(Modules<'a>)` - If the system are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parse(cursor: &mut Cursor<&'_ [u8]>) -> Result<Self::Output, UserDmpError> {
+    fn parse(cursor: &mut Cursor<&'_ [u8]>) -> Result<Self::Output> {
         // Reads the system info stream.
         let system_info = MINIDUMP_SYSTEM_INFO::read(cursor)?;
         
@@ -542,7 +546,7 @@ impl<'a> MinidumpStream<'a> for Module<'a> {
     /// 
     /// * `Ok(Modules<'a>)` - If the modules are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Modules<'a>, UserDmpError> {
+    fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Modules<'a>> {
         // Reads the module list stream.
         let module_list = MINIDUMP_MODULE_LIST::read(cursor)?;
         
@@ -566,7 +570,7 @@ impl<'a> MinidumpStream<'a> for Module<'a> {
                 let module = Module::new(module, module_name, &[], &[]);
                 Ok((module.range.start, module))
             })
-            .collect::<Result<Modules, UserDmpError>>()?;
+            .collect::<Result<Modules>>()?;
     
         // Returns the parsed modules.
         Ok(modules)
@@ -650,7 +654,7 @@ impl Thread {
     /// 
     /// * `Ok(Threads)` - If the threads are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parse(cursor: &mut Cursor<&[u8]>, arch: &Option<Arch>) -> Result<Threads, UserDmpError> {
+    fn parse(cursor: &mut Cursor<&[u8]>, arch: &Option<Arch>) -> Result<Threads> {
         // Reads the thread list stream.
         let thread_list = MINIDUMP_THREAD_LIST::read(cursor)?;
 
@@ -664,13 +668,13 @@ impl Thread {
                 let context = arch.as_ref().map(|arch| match arch {
                     Arch::X64 => unsafe { ThreadContext::X64(ptr::read_unaligned(context_slice.as_ptr() as *const CONTEXT_X64)) },
                     Arch::X86 => unsafe { ThreadContext::X86(ptr::read_unaligned(context_slice.as_ptr() as *const CONTEXT_X86)) },
-                }).ok_or(UserDmpError::InvalidContext())?;
+                }).ok_or(UserDmpError::InvalidContext)?;
 
                 // Creates a new Thread.
                 let thread = Thread::new(thread, context);
                 Ok((thread.thread_id, thread))
             })
-            .collect::<Result<Threads, UserDmpError>>()?;
+            .collect::<Result<Threads>>()?;
 
         Ok(threads)
     }
@@ -827,7 +831,7 @@ impl<'a> Memory<'a> {
     fn merge_memory(
         mut memory_info: Memorys<'a>,
         memory64: Memorys<'a>,
-    ) -> Result<Memorys<'a>, UserDmpError> {
+    ) -> Result<Memorys<'a>> {
         // Insert memory64 regions into memory_info.
         for (address, memory) in memory64 {
             memory_info.insert(address, memory);
@@ -846,7 +850,7 @@ impl<'a> Memory<'a> {
     /// 
     /// * `Ok(Memorys<'a>)` - A map of memory regions indexed by their base address.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parser_memory_info(cursor: &mut Cursor<&'a [u8]>) -> Result<Memorys<'a>, UserDmpError> {
+    fn parser_memory_info(cursor: &mut Cursor<&'a [u8]>) -> Result<Memorys<'a>> {
         // Reads the memory info list stream.
         let memory_info_list = MINIDUMP_MEMORY_INFO_LIST::read(cursor)?;
 
@@ -859,7 +863,7 @@ impl<'a> Memory<'a> {
 
                 Ok((memory.BaseAddress, memory_block))
             })
-            .collect::<Result<Memorys, UserDmpError>>()?;
+            .collect::<Result<Memorys>>()?;
 
         Ok(memorys)
     }
@@ -874,7 +878,7 @@ impl<'a> Memory<'a> {
     /// 
     /// * `Ok(Memorys<'a>)` - A map of memory regions indexed by their base address.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parser_memory64_list(cursor: &mut Cursor<&'a [u8]>) -> Result<Memorys<'a>, UserDmpError> {
+    fn parser_memory64_list(cursor: &mut Cursor<&'a [u8]>) -> Result<Memorys<'a>> {
         // Reads the Memory64List stream.
         let memory64_list = MINIDUMP_MEMORY64_LIST::read(cursor)?;
     
@@ -1005,7 +1009,7 @@ impl<'a> MinidumpStream<'a> for Handle {
     /// 
     /// * `Ok(Handles)` - If the handles are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Self::Output, UserDmpError> {
+    fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Self::Output> {
         // Reads the handle list stream.
         let handle_data = MINIDUMP_HANDLE_DATA_STREAM::read(cursor)?;
 
@@ -1052,7 +1056,7 @@ impl<'a> MinidumpStream<'a> for Handle {
                 let handle = Handle::new(type_name, object_name, &handle);
                 Ok((handle.handle, handle))
             })
-            .collect::<Result<Handles, UserDmpError>>()?;
+            .collect::<Result<Handles>>()?;
 
         Ok(handles)
     }
