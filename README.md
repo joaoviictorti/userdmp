@@ -33,12 +33,6 @@ Add `userdmp` to your project by updating your `Cargo.toml`:
 cargo add userdmp
 ```
 
-Or manually add the dependency:
-```toml
-[dependencies]
-userdmp = "<version>"
-```
-
 ## Usage
 
 The userdmp library provides tools to parse and analyze Minidump (.dmp) files generated in user mode on Windows. Here's how you can use it:
