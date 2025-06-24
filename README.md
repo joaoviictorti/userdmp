@@ -15,7 +15,6 @@
 - [Installation](#installation)
 - [Usage](#usage)
     - [Parsing a Minidump File](#parsing-a-minidump-file)
-- [Contributing to userdmp](#contributing-to-userdmp)
 - [License](#license)
 
 ## Features
@@ -53,19 +52,6 @@ fn main() -> Result<(), UserDmpError> {
 ```
 
 For more examples, see the [`examples`](./examples) folder in this repository. 📂
-
-
-## Contributing to userdmp
-
-To contribute to **userdmp**, follow these steps:
-
-1. Fork this repository.
-2. Create a branch: `git checkout -b <branch_name>`.
-3. Make your changes and commit them: `git commit -m '<commit_message>'`.
-4. Push your changes to your branch: `git push origin <branch_name>`.
-5. Create a pull request.
-
-Alternatively, consult the [GitHub documentation](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests) on how to create a pull request.
 
 ## License
 
