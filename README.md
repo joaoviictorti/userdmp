@@ -43,7 +43,9 @@ fn main() -> Result<(), UserDmpError> {
 }
 ```
 
-For more examples, see the [`examples`](./examples) folder in this repository. 📂
+## Additional Resources
+
+For more examples, check the [examples](/examples) folder in the repository.
 
 ## License
 
