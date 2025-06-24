@@ -9,14 +9,6 @@
 
 `userdmp` is library in Rust for parsing Minidump (.dmp) files generated in user mode on Windows
 
-## Table of Contents
-
-- [Features](#features)
-- [Installation](#installation)
-- [Usage](#usage)
-    - [Parsing a Minidump File](#parsing-a-minidump-file)
-- [License](#license)
-
 ## Features
 
 - ✅ **Module List Stream (`ModuleListStream`)**: Contains information about all loaded modules (e.g., DLLs), including their file paths, base addresses, and sizes.  
@@ -25,7 +17,7 @@
 - ✅ **Exception Stream (`ExceptionStream`)**: Records details about the exception that triggered the dump, including the exception code, address, and relevant parameters.  
 - ✅ **Memory Stream (`MemoryListStream / MemoryInfoListStream`)**: Provides a list of memory regions that were included in the dump, allowing analysis of process memory contents at the time of the crash.
 
-## Installation
+## Getting started
 
 Add `userdmp` to your project by updating your `Cargo.toml`:
 ```bash
