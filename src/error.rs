@@ -63,7 +63,7 @@ pub enum UserDmpError {
     /// Raised when the application fails to map a view of the minidump file (Unix).
     #[error("Failed to map view of file.")]
     MmapError,
-    
+
     /// Raised when a parsing error occurs in the `binrw` library.
     ///
     /// # Arguments

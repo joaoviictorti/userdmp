@@ -1,13 +1,16 @@
 use std::{
-    collections::BTreeMap, 
-    io::{self, Cursor, Seek}, 
-    path::Path, 
-    ptr::{self}
+    collections::BTreeMap,
+    io::{self, Cursor, Seek},
+    path::Path,
+    ptr::{self},
 };
 use binrw::BinRead;
 use crate::mapper::MappingFile;
 use crate::error::UserDmpError;
-use crate::data::{*, MINIDUMP_STREAM_TYPE::{self, *}};
+use crate::data::{
+    MINIDUMP_STREAM_TYPE::{self, *},
+    *,
+};
 
 /// Represents the modules in a minidump file, mapped by their starting memory address.
 pub type Modules<'a> = BTreeMap<u64, Module<'a>>;
@@ -30,7 +33,7 @@ pub enum Arch {
     // 64-bit architecture
     #[default]
     X64,
-    
+
     // 32-bit architecture
     X86,
 }
@@ -61,10 +64,10 @@ pub struct UserDump<'a> {
 
     // System information on the dump
     pub system: System,
-    
+
     /// The list of modules in the captured process.
     modules: Modules<'a>,
-    
+
     /// The list of threads in the captured process.
     threads: Threads,
 
@@ -75,7 +78,7 @@ pub struct UserDump<'a> {
     handles: Handles,
 
     /// Mapped file information.
-    pub mapped_file: MappingFile<'a>
+    pub mapped_file: MappingFile<'a>,
 }
 
 impl<'a> UserDump<'a> {
@@ -86,10 +89,10 @@ impl<'a> UserDump<'a> {
     /// * `path` - Path to the minidump file.
     ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Self)` - If the file is parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -107,12 +110,12 @@ impl<'a> UserDump<'a> {
     }
 
     /// Returns a reference to the list of threads in the parsed minidump.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use userdmp::UserDump;
-    /// 
+    ///
     /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (thread_id, thread) in dump.threads() {
     ///     println!("Thread ID: {}, Priority: {}", thread_id, thread.priority);
@@ -123,12 +126,12 @@ impl<'a> UserDump<'a> {
     }
 
     /// Returns a reference to the list of modules in the parsed minidump
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use userdmp::UserDump;
-    /// 
+    ///
     /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (base_address, module) in dump.modules() {
     ///     println!(
@@ -144,12 +147,12 @@ impl<'a> UserDump<'a> {
     }
 
     /// Returns a reference to the list of memory in the parsed minidump
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
     /// use userdmp::UserDump;
-    /// 
+    ///
     /// let dump = UserDump::new("example.dmp").unwrap();
     /// for (base_address, memory) in dump.memorys() {
     ///     println!(
@@ -164,7 +167,7 @@ impl<'a> UserDump<'a> {
     }
 
     /// Returns a reference to the list of handles in the parsed minidump.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -189,16 +192,16 @@ impl<'a> UserDump<'a> {
     /// Parses a specific stream type from a minidump file using the `MinidumpStream` trait.
     ///
     /// # Type Parameters
-    /// 
+    ///
     /// * `S` - The stream type to parse. Must implement the `MinidumpStream` trait.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - A mutable reference to a cursor positioned within the minidump file.
     ///   The cursor provides access to the binary data of the stream to be parsed.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(S::Output)` - The parsed result for the specific stream type.
     /// * `Err(UserDmpError)` - An error indicating that the parsing failed.
     fn parse_stream<S>(cursor: &mut Cursor<&'a [u8]>) -> Result<S::Output>
@@ -209,13 +212,13 @@ impl<'a> UserDump<'a> {
     }
 
     /// Parses a minidump file into a [`UserDump`] structure.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `mapped_file` - The memory-mapped minidump file.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Self)` - If the file is parsed successfully.
     /// * `Err(UserDmpError)` - If the file format is invalid or if parsing fails.
     fn parse(mapped_file: MappingFile<'a>) -> Result<Self> {
@@ -224,7 +227,7 @@ impl<'a> UserDump<'a> {
 
         // Reads minidump header.
         let header = MINIDUMP_HEADER::read(&mut cursor)?;
-        
+
         // Does the file provided have a minidump signature?
         if header.Signature != MINIDUMP_SIGNATURE {
             return Err(UserDmpError::InvalidSignature);
@@ -249,12 +252,12 @@ impl<'a> UserDump<'a> {
 
         // Seeks to the stream directory.
         cursor.seek(io::SeekFrom::Start(header.StreamDirectoryRva.into()))?;
-        
+
         // Collects all valid streams from the stream directory.
         let mut streams = (0..header.NumberOfStreams)
             .filter_map(|_| {
                 let stream = MINIDUMP_DIRECTORY::read(&mut cursor).ok()?;
-                (stream.StreamType != UnusedStream as u32).then(|| stream)
+                (stream.StreamType != UnusedStream as u32).then_some(stream)
             })
             .collect::<Vec<MINIDUMP_DIRECTORY>>();
 
@@ -268,13 +271,13 @@ impl<'a> UserDump<'a> {
         let mut memory_info = Memorys::new();
         let mut memory64 = Memorys::new();
         let mut handles = Handles::new();
-        let mut exception_thread_id  = None;
+        let mut exception_thread_id = None;
 
         // Processes each stream based on its type.
-        for stream in &streams { 
+        for stream in &streams {
             // Seeks to the stream data.
             cursor.seek(io::SeekFrom::Start(stream.Location.RVA.into()))?;
-        
+
             match MINIDUMP_STREAM_TYPE::try_from(stream.StreamType) {
                 Ok(SystemInfoStream) => system = Self::parse_stream::<System>(&mut cursor)?,
                 Ok(ModuleListStream) => modules = Self::parse_stream::<Module>(&mut cursor)?,
@@ -298,18 +301,18 @@ impl<'a> UserDump<'a> {
             threads,
             memorys,
             handles,
-            mapped_file
+            mapped_file,
         })
     }
 
     /// Parses the exception information from the `ExceptionStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the exception stream.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(u32)` - The thread ID associated with the exception.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parser_exception(cursor: &mut Cursor<&'a [u8]>) -> Result<u32> {
@@ -321,23 +324,20 @@ impl<'a> UserDump<'a> {
     }
 
     /// Extracts raw data from a [`MINIDUMP_LOCATION_DESCRIPTOR`].
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor to read data from.
     /// * `location` - The descriptor indicating where the data is located.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(&'a [u8])` - A slice containing the raw data.
     /// * `Err(io::Error)` - If the data extraction fails.
-    fn extract_raw_data(
-        cursor: &Cursor<&'a [u8]>, 
-        location: MINIDUMP_LOCATION_DESCRIPTOR
-    ) -> io::Result<&'a [u8]> {
+    fn extract_raw_data(cursor: &Cursor<&'a [u8]>, location: MINIDUMP_LOCATION_DESCRIPTOR) -> io::Result<&'a [u8]> {
         // Reads the RVA.
         let rva = location.RVA;
-        
+
         // Reads the size of the data.
         let size = location.DataSize;
 
@@ -351,7 +351,6 @@ impl<'a> UserDump<'a> {
 }
 
 // Represents the system information captured in the minidump.
-///
 /// The [`System`] struct contains details about the processor architecture,
 /// operating system version, and other general system information useful
 /// for analyzing the minidump.
@@ -385,23 +384,23 @@ pub struct System {
     pub platform_id: u32,
 }
 
-impl<'a> MinidumpStream<'a> for System {
+impl MinidumpStream<'_> for System {
     type Output = System;
 
     /// Parses the system information from the `SystemInfoStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the system info stream.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Modules<'a>)` - If the system are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parse(cursor: &mut Cursor<&'_ [u8]>) -> Result<Self::Output> {
         // Reads the system info stream.
         let system_info = MINIDUMP_SYSTEM_INFO::read(cursor)?;
-        
+
         // Converts MINIDUMP_SYSTEM_INFO into System.
         Ok(System::from(system_info))
     }
@@ -476,9 +475,9 @@ impl<'a> Module<'a> {
     ///
     /// * This function will panic if the memory range of the module is invalid (e.g., start >= end).
     pub fn new(module: &MINIDUMP_MODULE, name: String, cv_record: &'a [u8], misc_record: &'a [u8]) -> Self {
-        let range = std::ops::Range { 
-            start: module.BaseOfImage, 
-            end: module.BaseOfImage + module.SizeOfImage as u64
+        let range = std::ops::Range {
+            start: module.BaseOfImage,
+            end: module.BaseOfImage + module.SizeOfImage as u64,
         };
 
         if range.is_empty() {
@@ -491,7 +490,7 @@ impl<'a> Module<'a> {
             path: name.into(),
             time_date_stamp: module.TimeDateStamp,
             cv_record,
-            misc_record
+            misc_record,
         }
     }
 
@@ -500,7 +499,7 @@ impl<'a> Module<'a> {
     /// # Returns
     ///
     /// * An `Option<&str>` containing the file name, or `None` if the path is invalid or
-    /// not UTF-8 encoded.
+    ///   not UTF-8 encoded.
     pub fn name(&self) -> Option<&str> {
         self.path.file_name()?.to_str()
     }
@@ -531,25 +530,30 @@ impl<'a> Module<'a> {
     pub fn len(&self) -> u64 {
         self.range.end - self.range.start
     }
+
+    /// Returns true if the module has zero size.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
 }
 
 impl<'a> MinidumpStream<'a> for Module<'a> {
     type Output = Modules<'a>;
 
     /// Parses the list of modules from the `ModuleListStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the module list stream.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Modules<'a>)` - If the modules are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Modules<'a>> {
         // Reads the module list stream.
         let module_list = MINIDUMP_MODULE_LIST::read(cursor)?;
-        
+
         // Parses each module entry in the list.
         let modules = module_list
             .Modules
@@ -557,60 +561,60 @@ impl<'a> MinidumpStream<'a> for Module<'a> {
             .map(|module| {
                 // Seeks to the module name.
                 cursor.seek(io::SeekFrom::Start(module.ModuleNameRva.into()))?;
-                
+
                 // reading the structure MINIDUMP_STRING
                 let string = MINIDUMP_STRING::read(cursor)?;
-                
+
                 // Converts the name to UTF-8.
                 let module_name = String::from_utf16_lossy(&string.Buffer)
                     .trim_end_matches('\0')
                     .to_string();
-                
+
                 // Creates a new Module.
                 let module = Module::new(module, module_name, &[], &[]);
                 Ok((module.range.start, module))
             })
             .collect::<Result<Modules>>()?;
-    
+
         // Returns the parsed modules.
         Ok(modules)
     }
 }
 
 /// Represents the processor context of a thread captured in the minidump.
-/// 
+///
 /// The `ThreadContext` enum encapsulates the architecture-specific context
 /// data, such as register states, for threads in the captured process.
 #[derive(Debug)]
 pub enum ThreadContext {
     /// Represents the 64-bit processor context (`CONTEXT_X64`) for the thread.
-    X64(CONTEXT_X64),
+    X64(Box<CONTEXT_X64>),
 
     /// Represents the 32-bit processor context (`CONTEXT_X86`) for the thread.
-    X86(CONTEXT_X86),
+    X86(Box<CONTEXT_X86>),
 }
 
 /// Represents a thread in the process, as captured in the minidump file.
-/// 
+///
 /// The `Thread` struct contains metadata about the thread, such as its ID,
 /// priority, and execution context.
 #[derive(Debug)]
 pub struct Thread {
     /// The unique identifier (ID) of the thread.
     pub thread_id: u32,
-    
+
     /// The number of times the thread has been suspended.
     pub suspend_count: u32,
-    
+
     /// The priority class of the thread.
     pub priority_class: u32,
-    
+
     /// The priority level of the thread within its priority class.
     pub priority: u32,
-    
+
     /// The address of the Thread Environment Block (TEB), containing per-thread information.
     pub teb: u64,
-    
+
     /// The execution context of the thread, including register states.
     context: ThreadContext,
 }
@@ -633,7 +637,7 @@ impl Thread {
             priority_class: thread.PriorityClass,
             priority: thread.Priority,
             teb: thread.Teb,
-            context
+            context,
         }
     }
 
@@ -641,17 +645,17 @@ impl Thread {
     pub fn context(&self) -> &ThreadContext {
         &self.context
     }
-    
+
     /// Parses the list of threads from the `ThreadListStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the thread list stream.
     /// * `arch` - An optional `Arch` parameter that specifies the architecture (e.g., `X64` or `X86`).
     ///            This is used to correctly parse the thread context based on the architecture.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Threads)` - If the threads are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parse(cursor: &mut Cursor<&[u8]>, arch: &Option<Arch>) -> Result<Threads> {
@@ -665,10 +669,19 @@ impl Thread {
             .map(|thread| {
                 // Extracts the thread context.
                 let context_slice = UserDump::extract_raw_data(cursor, thread.ThreadContext)?;
-                let context = arch.as_ref().map(|arch| match arch {
-                    Arch::X64 => unsafe { ThreadContext::X64(ptr::read_unaligned(context_slice.as_ptr() as *const CONTEXT_X64)) },
-                    Arch::X86 => unsafe { ThreadContext::X86(ptr::read_unaligned(context_slice.as_ptr() as *const CONTEXT_X86)) },
-                }).ok_or(UserDmpError::InvalidContext)?;
+                let context = arch
+                    .as_ref()
+                    .map(|arch| match arch {
+                        Arch::X64 => unsafe {
+                            let ctx = ptr::read_unaligned(context_slice.as_ptr() as *const CONTEXT_X64);
+                            ThreadContext::X64(Box::new(ctx))
+                        },
+                        Arch::X86 => unsafe {
+                            let ctx = ptr::read_unaligned(context_slice.as_ptr() as *const CONTEXT_X86);
+                            ThreadContext::X86(Box::new(ctx))
+                        },
+                    })
+                    .ok_or(UserDmpError::InvalidContext)?;
 
                 // Creates a new Thread.
                 let thread = Thread::new(thread, context);
@@ -686,27 +699,27 @@ impl Thread {
 pub struct Memory<'a> {
     /// The range of memory addresses for this region.
     pub range: std::ops::Range<u64>,
-    
+
     /// The base address where this memory allocation begins.
     pub allocation_base: u64,
-    
+
     /// The protection attributes applied at the time of memory allocation.
     pub allocation_protect: u32,
-    
+
     /// The current state of the memory region, indicating if it's committed,
     /// reserved, or free (e.g., `MEM_COMMIT` or `MEM_FREE`).
     pub state: u32,
-    
+
     /// The protection level of the memory region (e.g., `PAGE_READWRITE`).
     pub protect: u32,
-    
+
     /// The type of memory region (e.g., private, mapped, or image).
     pub type_: u32,
 
     /// The raw bytes of the memory region, as extracted from the minidump file.
     /// This data represents the actual content of the memory in this region
     /// and can be used for further analysis or reconstruction.
-    pub data: &'a [u8]
+    pub data: &'a [u8],
 }
 
 impl<'a> Memory<'a> {
@@ -724,9 +737,9 @@ impl<'a> Memory<'a> {
     ///
     /// * This function will panic if the memory range is invalid (e.g., `start >= end`).
     fn new(memory: &MINIDUMP_MEMORY_INFO) -> Self {
-        let range = std::ops::Range { 
-            start: memory.BaseAddress, 
-            end: memory.BaseAddress + memory.RegionSize as u64
+        let range = std::ops::Range {
+            start: memory.BaseAddress,
+            end: memory.BaseAddress + memory.RegionSize,
         };
 
         if range.is_empty() {
@@ -757,10 +770,10 @@ impl<'a> Memory<'a> {
     ///
     /// * A `&str` describing the state of the memory.
     pub fn state(&self) -> &str {
-        if self.state == 0x10_000 { 
+        if self.state == 0x10_000 {
             return "";
         }
-        
+
         match self.state {
             0x1_000 => "MEM_COMMIT",
             0x2_000 => "MEM_RESERVE",
@@ -786,10 +799,10 @@ impl<'a> Memory<'a> {
             0x20_000 => "MEM_PRIVATE",
             0x40_000 => "MEM_MAPPED",
             0x1_000_000 => "MEM_IMAGE",
-            _ => "UNKNOWN"
+            _ => "UNKNOWN",
         }
     }
-    
+
     /// Returns the starting address of the memory region.
     ///
     /// # Returns
@@ -817,37 +830,39 @@ impl<'a> Memory<'a> {
         self.range.end - self.range.start
     }
 
+    /// Returns true if the memory region has zero size.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
     /// Merges two maps of memory regions into a single map.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `memory_info` - Memory regions parsed from the `MemoryInfoListStream`.
     /// * `memory64` - Memory regions parsed from the `Memory64ListStream`.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Memorys<'a>)` - The combined map of memory regions.
     /// * `Err(UserDmpError)` - If merging fails.
-    fn merge_memory(
-        mut memory_info: Memorys<'a>,
-        memory64: Memorys<'a>,
-    ) -> Result<Memorys<'a>> {
+    fn merge_memory(mut memory_info: Memorys<'a>, memory64: Memorys<'a>) -> Result<Memorys<'a>> {
         // Insert memory64 regions into memory_info.
         for (address, memory) in memory64 {
             memory_info.insert(address, memory);
         }
-        
+
         Ok(memory_info)
     }
 
     /// Parses memory information from the `MemoryInfoListStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the memory info list stream.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Memorys<'a>)` - A map of memory regions indexed by their base address.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parser_memory_info(cursor: &mut Cursor<&'a [u8]>) -> Result<Memorys<'a>> {
@@ -858,7 +873,7 @@ impl<'a> Memory<'a> {
         let memorys = memory_info_list
             .Entries
             .iter()
-            .map(| memory | {
+            .map(|memory| {
                 let memory_block = Memory::new(memory);
 
                 Ok((memory.BaseAddress, memory_block))
@@ -869,38 +884,38 @@ impl<'a> Memory<'a> {
     }
 
     /// Parses memory information from the `Memory64ListStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the memory 64 list stream.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Memorys<'a>)` - A map of memory regions indexed by their base address.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parser_memory64_list(cursor: &mut Cursor<&'a [u8]>) -> Result<Memorys<'a>> {
         // Reads the Memory64List stream.
         let memory64_list = MINIDUMP_MEMORY64_LIST::read(cursor)?;
-    
+
         let mut memorys = Memorys::new();
         let mut current_rva = memory64_list.BaseRva;
-    
+
         // Iterate over the memory descriptors in the list.
         for memory_descriptor in memory64_list.Ranges.iter() {
             let range = std::ops::Range {
                 start: memory_descriptor.StartOfMemoryRange,
                 end: memory_descriptor.StartOfMemoryRange + memory_descriptor.DataSize,
             };
-    
+
             // Seek to the data for the current memory descriptor.
-            cursor.seek(io::SeekFrom::Start(current_rva as u64))?;
-    
+            cursor.seek(io::SeekFrom::Start(current_rva))?;
+
             // Read the memory data.
             let data = {
                 let data_slice = &cursor.get_ref()[(current_rva as usize)..];
                 &data_slice[..(memory_descriptor.DataSize as usize)]
             };
-    
+
             // Create a Memory instance.
             let memory = Memory {
                 range,
@@ -911,13 +926,13 @@ impl<'a> Memory<'a> {
                 type_: 0,
                 data,
             };
-    
+
             memorys.insert(memory_descriptor.StartOfMemoryRange, memory);
-    
+
             // Update the current RVA for the next memory block.
             current_rva += memory_descriptor.DataSize;
         }
-    
+
         Ok(memorys)
     }
 }
@@ -954,17 +969,13 @@ impl Handle {
     /// # Returns
     ///
     /// * A `Handle` instance initialized with the provided data.
-    pub fn new(
-        type_name: Option<String>, 
-        object_name: Option<String>, 
-        handle: &MINIDUMP_HANDLE_DESCRIPTOR
-    ) -> Self {
+    pub fn new(type_name: Option<String>, object_name: Option<String>, handle: &MINIDUMP_HANDLE_DESCRIPTOR) -> Self {
         Self {
             handle: handle.Handle,
             type_name,
             object_name,
             attributes: handle.Attributes,
-            granted_access: handle.GrantedAccess
+            granted_access: handle.GrantedAccess,
         }
     }
 
@@ -1000,13 +1011,13 @@ impl<'a> MinidumpStream<'a> for Handle {
     type Output = Handles;
 
     /// Parses the list of handles from the `HandleDataStream`.
-    /// 
+    ///
     /// # Arguments
-    /// 
+    ///
     /// * `cursor` - Cursor positioned at the handle list stream.
-    /// 
+    ///
     /// # Returns
-    /// 
+    ///
     /// * `Ok(Handles)` - If the handles are parsed successfully.
     /// * `Err(UserDmpError)` - If an error occurs during parsing.
     fn parse(cursor: &mut Cursor<&'a [u8]>) -> Result<Self::Output> {
@@ -1024,12 +1035,12 @@ impl<'a> MinidumpStream<'a> for Handle {
 
                     // reading the structure MINIDUMP_STRING
                     let string = MINIDUMP_STRING::read(cursor)?;
-                    
+
                     // Converts the name to UTF-8.
                     let name = String::from_utf16_lossy(&string.Buffer)
                         .trim_end_matches('\0')
                         .to_string();
-                    
+
                     Some(name)
                 } else {
                     None
@@ -1041,19 +1052,19 @@ impl<'a> MinidumpStream<'a> for Handle {
 
                     // reading the structure MINIDUMP_STRING
                     let string = MINIDUMP_STRING::read(cursor)?;
-                    
+
                     // Converts the name to UTF-8.
                     let name = String::from_utf16_lossy(&string.Buffer)
                         .trim_end_matches('\0')
                         .to_string();
-                    
+
                     Some(name)
                 } else {
                     None
                 };
 
                 // Creates a new Handle.
-                let handle = Handle::new(type_name, object_name, &handle);
+                let handle = Handle::new(type_name, object_name, handle);
                 Ok((handle.handle, handle))
             })
             .collect::<Result<Handles>>()?;

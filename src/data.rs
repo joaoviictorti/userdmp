@@ -16,7 +16,7 @@ pub const ARCH_X64: u16 = 9;
 pub const ARCH_X86: u16 = 0;
 
 /// Contains header information for the minidump file.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_header).
 #[derive(Copy, Clone)]
 #[binrw::binrw]
@@ -24,25 +24,25 @@ pub const ARCH_X86: u16 = 0;
 pub struct MINIDUMP_HEADER {
     /// The signature.
     pub Signature: u32,
-    
+
     /// The version of the minidump format.
     pub Version: u32,
-    
+
     /// The number of streams in the minidump directory.
     pub NumberOfStreams: u32,
-    
+
     /// The base RVA of the minidump directory.
     pub StreamDirectoryRva: u32,
-    
+
     /// The checksum for the minidump file.
     pub CheckSum: u32,
-    
+
     /// This member is reserved.
     pub Reserved: u32,
 
     // Time and date, in time_t format.
     pub TimeDateStamp: u32,
-    
+
     /// One or more values from the MINIDUMP_TYPE enumeration type.
     pub Flags: u64,
 }
@@ -59,11 +59,11 @@ pub struct MINIDUMP_DIRECTORY {
     pub StreamType: u32,
 
     /// A [`MINIDUMP_LOCATION_DESCRIPTOR`] structure that specifies the location of the data stream.
-    pub Location: MINIDUMP_LOCATION_DESCRIPTOR
+    pub Location: MINIDUMP_LOCATION_DESCRIPTOR,
 }
 
 /// Represents an exception information stream.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_exception_stream).
 #[derive(Copy, Clone)]
 #[binrw::binrw]
@@ -74,16 +74,16 @@ pub struct MINIDUMP_EXCEPTION_STREAM {
 
     /// A variable for alignment.
     pub alignment: u32,
-    
+
     /// A MINIDUMP_EXCEPTION structure.
     pub ExceptionRecord: MINIDUMP_EXCEPTION,
-    
+
     /// A MINIDUMP_LOCATION_DESCRIPTOR structure.
-    pub ThreadContext: MINIDUMP_LOCATION_DESCRIPTOR 
+    pub ThreadContext: MINIDUMP_LOCATION_DESCRIPTOR,
 }
 
 /// Represents an exception information stream.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_exception_stream).
 #[derive(Copy, Clone)]
 #[binrw::binrw]
@@ -92,27 +92,27 @@ pub struct MINIDUMP_EXCEPTION {
     /// The reason the exception occurred.
     pub ExceptionCode: u32,
 
-    ///This member can be either zero, indicating a continuable exception, or EXCEPTION_NONCONTINUABLE, indicating a noncontinuable exception.
+    /// This member can be either zero, indicating a continuable exception, or EXCEPTION_NONCONTINUABLE, indicating a noncontinuable exception.
     pub ExceptionFlags: u32,
-    
+
     /// A pointer to an associated MINIDUMP_EXCEPTION structure.
     pub ExceptionRecord: u64,
-    
+
     /// The address where the exception occurred.
     pub ExceptionAddress: u64,
-    
-    /// The number of parameters associated with the exception. 
+
+    /// The number of parameters associated with the exception.
     pub NumberParameters: u32,
-    
+
     /// Reserved for cross-platform structure member alignment. Do not set
-    pub unusedAlignment: u32, 
-    
+    pub unusedAlignment: u32,
+
     /// An array of additional arguments that describe the exception.
     pub ExceptionInformation: [u64; EXCEPTION_MAXIMUM_PARAMETERS],
 }
 
 /// Contains a list of memory ranges.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory_info_list).
 #[derive(Clone)]
 #[binrw::binrw]
@@ -120,21 +120,21 @@ pub struct MINIDUMP_EXCEPTION {
 pub struct MINIDUMP_MEMORY_INFO_LIST {
     /// Size of the header for this structure.
     pub SizeOfHeader: u32,
-    
+
     /// Size of each entry in the memory info list.
     pub SizeOfEntry: u32,
-    
+
     /// Number of entries in the memory info list.
     pub NumberOfEntries: u64,
-    
+
     /// The list of memory info entries.
     #[br(count = NumberOfEntries)]
     pub Entries: Vec<MINIDUMP_MEMORY_INFO>,
 }
 
 /// Describes a region of memory.
-/// 
-/// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory_info). 
+///
+/// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory_info).
 #[derive(Copy, Clone)]
 #[binrw::binrw]
 #[brw(little)]
@@ -162,21 +162,21 @@ pub struct MINIDUMP_MEMORY_INFO {
 
     /// The type of memory region (e.g., private, mapped, image).
     pub Type: u32,
-    
+
     /// Alignment padding (unused).
     pub alignment2: u32,
 }
 
 /// Contains a list of memory ranges.
-/// 
-/// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory64_list). 
+///
+/// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory64_list).
 #[derive(Clone)]
 #[binrw::binrw]
 #[brw(little)]
 pub struct MINIDUMP_MEMORY64_LIST {
     /// The number of structures in the MemoryRanges array.
     pub NumberOfMemoryRanges: u64,
-    
+
     /// An array of MINIDUMP_MEMORY_DESCRIPTOR structures.
     pub BaseRva: u64,
 
@@ -186,8 +186,8 @@ pub struct MINIDUMP_MEMORY64_LIST {
 }
 
 /// Describes a range of memory.
-/// 
-/// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory_descriptor). 
+///
+/// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory_descriptor).
 #[derive(Clone)]
 #[binrw::binrw]
 #[brw(little)]
@@ -196,56 +196,56 @@ pub struct MINIDUMP_MEMORY_DESCRIPTOR64 {
     pub StartOfMemoryRange: u64,
 
     /// A MINIDUMP_LOCATION_DESCRIPTOR structure.
-    pub DataSize: u64
-} 
+    pub DataSize: u64,
+}
 
 /// Contains processor and operating system information.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_system_info)
 #[derive(Copy, Clone)]
 #[binrw::binrw]
 #[brw(little)]
 pub struct MINIDUMP_SYSTEM_INFO {
-    /// The system's processor architecture. 
+    /// The system's processor architecture.
     pub ProcessorArchitecture: u16,
-    
+
     /// The system's architecture-dependent processor level.
     pub ProcessorLevel: u16,
-    
+
     /// The architecture-dependent processor revision.
     pub ProcessorRevision: u16,
-    
+
     /// The number of processors in the system.
     pub NumberOfProcessors: u8,
-    
+
     /// Any additional information about the system.
     pub ProductType: u8,
-    
+
     /// The major version number of the operating system.
     pub MajorVersion: u32,
-    
+
     /// The minor version number of the operating system.
     pub MinorVersion: u32,
-    
+
     /// The build number of the operating system.
     pub BuildNumber: u32,
-    
+
     /// The operating system platform.
     pub PlatformId: u32,
-    
+
     /// An RVA (from the beginning of the dump) to a MINIDUMP_STRING that describes the latest Service Pack installed on the system.
     pub CSDVersionRva: u32,
-    
+
     /// The bit flags that identify the product suites available on the system.
     pub SuiteMask: u16,
-    
+
     /// This member is reserved for future use.
     pub Reserved2: u16,
 }
 
 /// Contains a list of modules.
-/// 
-/// 
+///
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_module_list)
 #[derive(Clone)]
 #[binrw::binrw]
@@ -257,15 +257,15 @@ pub struct MINIDUMP_MODULE_LIST {
     /// An array of MINIDUMP_MODULE structures.
     #[br(count = NumberOfModules)]
     pub Modules: Vec<MINIDUMP_MODULE>,
-} 
+}
 
 /// Contains information for a specific module.
-/// 
-/// 
+///
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_module)
 #[derive(Copy, Clone)]
 #[binrw::binrw]
-#[brw(little)] 
+#[brw(little)]
 pub struct MINIDUMP_MODULE {
     /// The base address of the module executable image in memory.
     pub BaseOfImage: u64,
@@ -290,7 +290,7 @@ pub struct MINIDUMP_MODULE {
 
     /// A MINIDUMP_LOCATION_DESCRIPTOR structure that specifies the miscellaneous record of the module.
     pub MiscRecord: MINIDUMP_LOCATION_DESCRIPTOR,
-    
+
     /// Reserved for future use.
     pub Reserved0: u64,
 
@@ -313,7 +313,7 @@ pub struct VS_FIXEDFILEINFO_FILE_FLAGS(pub u32);
 pub struct VS_FIXEDFILEINFO_FILE_OS(pub u32);
 
 /// Contains version information for a file.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/verrsrc/ns-verrsrc-vs_fixedfileinfo)
 #[derive(Copy, Clone)]
 #[binrw::binrw]
@@ -345,11 +345,11 @@ pub struct VS_FIXEDFILEINFO {
 
     /// The operating system for which this file was designed.
     pub dwFileOS: VS_FIXEDFILEINFO_FILE_OS,
-    
+
     /// The general type of file.
     pub dwFileType: u32,
 
-    /// The function of the file. 
+    /// The function of the file.
     pub dwFileSubtype: u32,
 
     /// The most significant 32 bits of the file's 64-bit binary creation date and time stamp.
@@ -360,7 +360,7 @@ pub struct VS_FIXEDFILEINFO {
 }
 
 /// Contains a list of threads.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_thread_list)
 #[derive(Clone)]
 #[binrw::binrw]
@@ -375,7 +375,7 @@ pub struct MINIDUMP_THREAD_LIST {
 }
 
 /// Contains information for a specific thread.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_thread)
 #[derive(Copy, Clone)]
 #[binrw::binrw]
@@ -383,7 +383,7 @@ pub struct MINIDUMP_THREAD_LIST {
 pub struct MINIDUMP_THREAD {
     /// The identifier of the thread.
     pub ThreadId: u32,
-    
+
     /// The suspend count for the thread. If the suspend count is greater than zero, the thread is suspended; otherwise, the thread is not suspended.
     pub SuspendCount: u32,
 
@@ -400,11 +400,11 @@ pub struct MINIDUMP_THREAD {
     pub Stack: MINIDUMP_MEMORY_DESCRIPTOR,
 
     /// A MINIDUMP_LOCATION_DESCRIPTOR structure.
-    pub ThreadContext: MINIDUMP_LOCATION_DESCRIPTOR
+    pub ThreadContext: MINIDUMP_LOCATION_DESCRIPTOR,
 }
 
 /// Describes a range of memory.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_memory_descriptor)
 #[derive(Copy, Clone)]
 #[binrw::binrw]
@@ -414,11 +414,11 @@ pub struct MINIDUMP_MEMORY_DESCRIPTOR {
     pub StartOfMemoryRange: u64,
 
     /// A MINIDUMP_LOCATION_DESCRIPTOR structure.
-    pub Memory: MINIDUMP_LOCATION_DESCRIPTOR
+    pub Memory: MINIDUMP_LOCATION_DESCRIPTOR,
 }
 
 /// Contains information describing the location of a data stream within a minidump file.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_location_descriptor)
 #[derive(Copy, Clone, Debug)]
 #[binrw::binrw]
@@ -438,7 +438,7 @@ pub struct HandleArgs {
 }
 
 /// Represents the header for a handle data stream.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_handle_data_stream)
 #[derive(Clone)]
 #[binrw::binrw]
@@ -465,18 +465,19 @@ pub struct MINIDUMP_HANDLE_DATA_STREAM {
 }
 
 /// Contains the state of an individual system handle at the time the minidump was written.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_handle_descriptor)
 #[derive(Clone)]
 #[binrw::binrw]
 #[brw(little, import(size_of_descriptor: u32))]
+#[allow(clippy::manual_non_exhaustive)]
 pub struct MINIDUMP_HANDLE_DESCRIPTOR {
     /// The operating system handle value.
     pub Handle: u64,
 
     /// An RVA to a MINIDUMP_STRING structure that specifies the object type of the handle.
     pub TypeNameRva: u32,
-    
+
     /// An RVA to a MINIDUMP_STRING structure that specifies the object name of the handle.
     pub ObjectNameRva: u32,
 
@@ -498,11 +499,11 @@ pub struct MINIDUMP_HANDLE_DESCRIPTOR {
 }
 
 /// Describes a string.
-/// 
+///
 /// For more details, see the official [Microsoft documentation](https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ns-minidumpapiset-minidump_string)
 #[binrw::binrw]
 #[brw(little)]
-pub struct MINIDUMP_STRING { 
+pub struct MINIDUMP_STRING {
     /// The size of the string in the Buffer member, in bytes.
     pub Length: u32,
 
@@ -512,7 +513,7 @@ pub struct MINIDUMP_STRING {
 }
 
 /// Represents the type of a minidump data stream.
-/// 
+///
 /// <https://learn.microsoft.com/en-us/windows/win32/api/minidumpapiset/ne-minidumpapiset-minidump_stream_type>
 #[allow(dead_code)]
 #[repr(u32)]
@@ -555,7 +556,7 @@ pub enum MINIDUMP_STREAM_TYPE {
     ceStreamBucketParameters = 0x800A,
     ceStreamProcessModuleMap = 0x800B,
     ceStreamDiagnosisList = 0x800C,
-    LastReservedStream = 0xffff
+    LastReservedStream = 0xffff,
 }
 
 impl TryFrom<u32> for MINIDUMP_STREAM_TYPE {
@@ -713,5 +714,5 @@ pub struct CONTEXT_X86 {
     pub EFlags: u32,
     pub Esp: u32,
     pub SegSs: u32,
-    pub ExtendedRegisters: [u8;512]
+    pub ExtendedRegisters: [u8; 512],
 }

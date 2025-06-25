@@ -1,9 +1,4 @@
-use std::{
-    fs::File,
-    path::Path,
-    io,
-    ffi::c_void
-};
+use std::{ffi::c_void, fs::File, io, path::Path};
 use super::error::UserDmpError;
 
 /// Represents a memory-mapped file.
@@ -28,7 +23,7 @@ impl<'a> MappingFile<'a> {
     /// # Returns
     ///
     /// A `MappingFile` instance containing the memory-mapped contents of the file.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -44,7 +39,7 @@ impl<'a> MappingFile<'a> {
     /// ```
     pub fn new(path: impl AsRef<Path>) -> Result<Self, UserDmpError> {
         let file = File::open(path)?;
-        let (buffer, address) = mapper::map_file(file)?;
+        let (buffer, address) = map::map_file(file)?;
         Ok(Self { buffer, address })
     }
 
@@ -54,7 +49,7 @@ impl<'a> MappingFile<'a> {
     ///
     /// An `io::Cursor` that wraps the memory-mapped file's buffer,
     /// allowing for efficient reading.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -82,29 +77,33 @@ impl<'a> MappingFile<'a> {
 impl Drop for MappingFile<'_> {
     fn drop(&mut self) {
         if !self.address.is_null() {
-            #[cfg(windows)] {
-                use windows_sys::Win32::System::Memory::{UnmapViewOfFile, MEMORY_MAPPED_VIEW_ADDRESS};
+            #[cfg(windows)]
+            {
+                use windows_sys::Win32::System::Memory::{MEMORY_MAPPED_VIEW_ADDRESS, UnmapViewOfFile};
 
                 // Create a MEMORY_MAPPED_VIEW_ADDRESS struct with the correct value.
-                let address = MEMORY_MAPPED_VIEW_ADDRESS {
-                    Value: self.address,
-                };
+                let address = MEMORY_MAPPED_VIEW_ADDRESS { Value: self.address };
 
                 // SAFETY: UnmapViewOfFile is called with a valid mapped address.
-                unsafe { UnmapViewOfFile(address); }
+                unsafe {
+                    UnmapViewOfFile(address);
+                }
             }
 
-            #[cfg(unix)] {
+            #[cfg(unix)]
+            {
                 // SAFETY: munmap is called with a valid mapped address and size.
-                unsafe { libc::munmap(self.address, self.buffer.len()); }
+                unsafe {
+                    libc::munmap(self.address, self.buffer.len());
+                }
             }
         }
     }
 }
 
-mod mapper {
+mod map {
+    use std::{ffi::c_void, ptr, slice};
     use super::{File, UserDmpError};
-    use std::{ptr, slice, ffi::c_void};
 
     /// Maps a file into memory and retrieves its memory buffer and base address (Windows).
     ///
@@ -117,7 +116,7 @@ mod mapper {
     /// A tuple containing:
     /// * A slice of the memory-mapped file contents.
     /// * The base address of the memory-mapped file in the process's address space.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -139,25 +138,14 @@ mod mapper {
         use std::os::windows::io::AsRawHandle;
         use windows_sys::Win32::{
             Foundation::CloseHandle,
-            System::Memory::{
-                CreateFileMappingA, MapViewOfFile, FILE_MAP_READ, PAGE_READONLY,
-            },
+            System::Memory::{CreateFileMappingA, FILE_MAP_READ, MapViewOfFile, PAGE_READONLY},
         };
 
         // Get the raw file handle.
         let h_file = file.as_raw_handle();
 
         // Create a memory mapping for the file.
-        let h_mapping = unsafe {
-            CreateFileMappingA(
-                h_file,
-                ptr::null_mut(),
-                PAGE_READONLY,
-                0,
-                0,
-                ptr::null_mut(),
-            )
-        };
+        let h_mapping = unsafe { CreateFileMappingA(h_file, ptr::null_mut(), PAGE_READONLY, 0, 0, ptr::null_mut()) };
 
         // Return an error if the file mapping creation failed.
         if h_mapping.is_null() {
@@ -167,7 +155,7 @@ mod mapper {
         // Get the file size and map the view of the file.
         let size = file.metadata()?.len() as usize;
         let base_address = unsafe { MapViewOfFile(h_mapping, FILE_MAP_READ, 0, 0, size) };
-        
+
         // Return an error if mapping the view failed.
         if base_address.Value.is_null() {
             unsafe { CloseHandle(h_mapping) };
@@ -178,12 +166,7 @@ mod mapper {
         unsafe { CloseHandle(h_mapping) };
 
         // Return the memory-mapped buffer and its base address.
-        unsafe {
-            Ok((
-                slice::from_raw_parts(base_address.Value as *const u8, size),
-                base_address.Value,
-            ))
-        }
+        unsafe { Ok((slice::from_raw_parts(base_address.Value as *const u8, size), base_address.Value)) }
     }
 
     /// Maps a file into memory and retrieves its memory buffer and base address (Unix).
@@ -197,7 +180,7 @@ mod mapper {
     /// A tuple containing:
     /// * A slice of the memory-mapped file contents.
     /// * The base address of the memory-mapped file in the process's address space.
-    /// 
+    ///
     /// # Example
     ///
     /// ```rust,ignore
@@ -216,8 +199,8 @@ mod mapper {
     /// ```
     #[cfg(unix)]
     pub fn map_file(file: File) -> Result<(&'static [u8], *mut c_void), UserDmpError> {
-        use libc::{mmap, MAP_FAILED, MAP_SHARED, PROT_READ};
         use std::os::unix::io::AsRawFd;
+        use libc::{MAP_FAILED, MAP_SHARED, PROT_READ, mmap};
 
         // Get the raw file descriptor.
         let fd = file.as_raw_fd();
@@ -226,28 +209,14 @@ mod mapper {
         let size = file.metadata()?.len() as usize;
 
         // Create a memory mapping for the file.
-        let base_address = unsafe {
-            mmap(
-                ptr::null_mut(),
-                size,
-                PROT_READ,
-                MAP_SHARED,
-                fd,
-                0,
-            )
-        };
+        let base_address = unsafe { mmap(ptr::null_mut(), size, PROT_READ, MAP_SHARED, fd, 0) };
 
-         // Return an error if the mapping failed.
+        // Return an error if the mapping failed.
         if base_address == MAP_FAILED {
             return Err(UserDmpError::MmapError);
         }
 
         // Return the memory-mapped buffer and its base address.
-        unsafe {
-            Ok((
-                slice::from_raw_parts(base_address as *const u8, size),
-                base_address,
-            ))
-        }
+        unsafe { Ok((slice::from_raw_parts(base_address as *const u8, size), base_address)) }
     }
 }
