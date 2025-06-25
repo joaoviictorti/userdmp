@@ -26,3 +26,23 @@ windows-sys = { version = "0.59.0", features = ["Win32_Security", "Win32_System_
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.169"
+
+[[example]]
+name = "handles"
+path = "examples/handles/main.rs"
+
+[[example]]
+name = "memorys"
+path = "examples/memorys/main.rs"
+
+[[example]]
+name = "modules"
+path = "examples/modules/main.rs"
+
+[[example]]
+name = "system"
+path = "examples/system/main.rs"
+
+[[example]]
+name = "threads"
+path = "examples/threads/main.rs"
