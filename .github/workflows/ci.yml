@@ -1,4 +1,4 @@
-name: uwd-ci
+name: userdmp-ci
 
 on: [push, pull_request]
 
